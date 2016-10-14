@@ -7,6 +7,7 @@ class Simulation():
     def __init__(self, TICKS, Lambda, L, C, K=None, tick_length=0.000001):
         # Input Parameters
 
+        # p = ( Lambda * L ) / C
         self.TICKS = TICKS
         # Tick length - SECONDS / TICK
         self.tick_length = tick_length
@@ -15,7 +16,7 @@ class Simulation():
         self.Lambda = float(Lambda)
 
         # Buffer size
-        self.K = K
+        self.K = K + 1 if not K is None else None
 
         self.q = deque()
 
@@ -31,6 +32,7 @@ class Simulation():
         # Stats
         self.packets_in_queue = [0]*self.TICKS
         self.sojourn_time = []
+        self.packets_dropped = 0
 
         log.info('Simulation lasts %s ticks' % self.TICKS)
         log.info('Simulation covers %s seconds' % (self.TICKS * self.tick_length))
@@ -52,7 +54,12 @@ class Simulation():
                 self.updateDepartureTick(current_tick)
                 log.debug('New Departure: %s' % self.departure_tick)
 
-            self.q.append(current_tick)
+            if not self.K is None and len(self.q) == self.K:
+                self.packets_dropped += 1
+                log.debug('PACKET DROPPED: %s' % current_tick)
+            else:
+                self.q.append(current_tick)
+
             log.debug('Enque Packet: {:8d} Q: {:4d}'.format(current_tick, len(self.q)))
             self.arrival_tick = current_tick + self.calcArrivalTime()
 
@@ -70,10 +77,6 @@ class Simulation():
                 self.updateDepartureTick(current_tick)
                 log.debug('New Departure: %s' % self.departure_tick)
 
-        # current_tick is past the previous departure time and queue is empty: IDLE
-        # elif current_tick > self.departure_tick and not self.q:
-        # log.debug('SERVRE IDLE: %s' % current_tick)
-
     def run(self):
         self.arrival_tick = self.calcArrivalTime()
         log.debug('Next Arrival: %s' % self.arrival_tick)
@@ -87,16 +90,20 @@ class Simulation():
         log.debug('QUEUE:\n%s' % self.q)
 
         avg_sojourn_time = float(sum(self.sojourn_time)) / float(len(self.sojourn_time))
-        avg_queue_load = float(sum(self.packets_in_queue)) / float(len(self.packets_in_queue))
+        packets_in_queue = 0
+        for i in self.packets_in_queue:
+            packets_in_queue += (i - 1) if i > 0 else 0
+        avg_queue_load = float(packets_in_queue) / float(self.TICKS)
 
-        p_idle = (float(self.packets_in_queue.count(0)) / float(len(self.packets_in_queue))) * 100
-
-        # TODO Calculate p_loss
-        p_loss = None
+        p_idle = float(self.packets_in_queue.count(0)) / float(self.TICKS)
+        p_loss = ( float(self.packets_dropped) / float(len(self.sojourn_time) + self.packets_dropped) ) if not self.K is None else None
 
         log.info('Average Sojourn Time: %s' % avg_sojourn_time )
-        log.info('Average Queue Load:   %s' %   avg_queue_load )
-        log.info('Server Idle Percent:  %s' %   p_idle )
+        log.info('Average Queue Load:   %s' % avg_queue_load )
+        log.info('Server Idle Ratio:    %s' % p_idle )
+        log.info('Packet Drop Ratio:    %s' % p_loss )
+        log.debug('Total Packets Arrived: %s' % len(self.sojourn_time) )
+        log.debug('Number of packets dropped: %s' % self.packets_dropped )
 
         return {'avg_queue_load': avg_queue_load,
                 'avg_sojourn_time': avg_sojourn_time,
