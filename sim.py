@@ -4,10 +4,9 @@ from logmodule import simLog as log
 from collections import deque
 
 class Simulation():
-    def __init__(self, TICKS, Lambda, L, C, K=None, tick_length=0.000001):
+    def __init__(self, TICKS, Lambda, L, C, K=None, tick_length=0.00001):
         # Input Parameters
 
-        # p = ( Lambda * L ) / C
         self.TICKS = TICKS
         # Tick length - SECONDS / TICK
         self.tick_length = tick_length
@@ -37,13 +36,24 @@ class Simulation():
         log.info('Simulation lasts %s ticks' % self.TICKS)
         log.info('Simulation covers %s seconds' % (self.TICKS * self.tick_length))
         log.info('Server Proc Duration (ticks): %s' % self.server_proc_duration)
+        log.info('Lambda: %s' % self.Lambda)
 
     def calcArrivalTime(self):
         u = random.uniform(0,1)
-        arrival_time_sec = (-1.0 / self.Lambda) * math.log(1 - u)
+        aa = (-1.0 / self.Lambda)
+        bb = math.log(1.0 - u)
+        arrival_time_sec = aa * bb
         arrival_time = arrival_time_sec / self.tick_length
         discrete_arrival_time = int(round(arrival_time, 0))
-        return discrete_arrival_time
+
+        log.debug('u: %s' % u)
+        log.debug('-1 / Lambda = %s' % aa)
+        log.debug('log (1 - u) = %s' % bb)
+        log.debug('arrival_time_sec: %s' % arrival_time_sec)
+        log.debug('arrival_time: %s' % arrival_time)
+        log.debug('discrete_arrival_time: %s' % discrete_arrival_time)
+
+        return discrete_arrival_time if discrete_arrival_time > 0 else 1
 
     def arrival(self, current_tick):
         if current_tick == self.arrival_tick:
@@ -62,6 +72,7 @@ class Simulation():
 
             log.debug('Enque Packet: {:8d} Q: {:4d}'.format(current_tick, len(self.q)))
             self.arrival_tick = current_tick + self.calcArrivalTime()
+            log.debug('NEW ARRIVAL TIME: %s' % self.arrival_tick)
 
     def updateDepartureTick(self, current_tick):
         self.departure_tick = current_tick + self.server_proc_duration
@@ -84,7 +95,6 @@ class Simulation():
         for i in xrange(self.TICKS):
             self.arrival(i)
             self.departure(i)
-
             self.packets_in_queue[i] = len(self.q)
 
         log.debug('QUEUE:\n%s' % self.q)
@@ -98,12 +108,15 @@ class Simulation():
         p_idle = float(self.packets_in_queue.count(0)) / float(self.TICKS)
         p_loss = ( float(self.packets_dropped) / float(len(self.sojourn_time) + self.packets_dropped) ) if not self.K is None else None
 
+        log.info('---:: RUN STATISTICS ::---')
         log.info('Average Sojourn Time: %s' % avg_sojourn_time )
         log.info('Average Queue Load:   %s' % avg_queue_load )
         log.info('Server Idle Ratio:    %s' % p_idle )
         log.info('Packet Drop Ratio:    %s' % p_loss )
-        log.debug('Total Packets Arrived: %s' % len(self.sojourn_time) )
-        log.debug('Number of packets dropped: %s' % self.packets_dropped )
+        log.info('Total Packets Arrived: %s' % len(self.sojourn_time) )
+        log.info('Number of packets dropped: %s' % self.packets_dropped )
+
+        #log.debug('%s' % self.packets_in_queue )
 
         return {'avg_queue_load': avg_queue_load,
                 'avg_sojourn_time': avg_sojourn_time,
