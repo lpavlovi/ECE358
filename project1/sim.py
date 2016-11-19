@@ -97,7 +97,7 @@ class Simulation():
             self.departure(i)
             self.packets_in_queue[i] = len(self.q)
 
-        log.debug('QUEUE:\n%s' % self.q)
+        # log.debug('QUEUE:\n%s' % self.q)
 
         avg_sojourn_time = float(sum(self.sojourn_time)) / float(len(self.sojourn_time))
         packets_in_queue = 0
@@ -108,6 +108,7 @@ class Simulation():
         p_idle = float(self.packets_in_queue.count(0)) / float(self.TICKS)
         p_loss = ( float(self.packets_dropped) / float(len(self.sojourn_time) + self.packets_dropped) ) if not self.K is None else None
 
+        """
         log.info('---:: RUN STATISTICS ::---')
         log.info('Average Sojourn Time: %s' % avg_sojourn_time )
         log.info('Average Queue Load:   %s' % avg_queue_load )
@@ -115,6 +116,7 @@ class Simulation():
         log.info('Packet Drop Ratio:    %s' % p_loss )
         log.info('Total Packets Arrived: %s' % len(self.sojourn_time) )
         log.info('Number of packets dropped: %s' % self.packets_dropped )
+        """
 
         #log.debug('%s' % self.packets_in_queue )
 
@@ -122,3 +124,4 @@ class Simulation():
                 'avg_sojourn_time': avg_sojourn_time,
                 'p_idle': p_idle, 
                 'p_loss': p_loss}
+
