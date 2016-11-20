@@ -5,7 +5,7 @@ from NodeStates import NodeState
 from collections import deque
 
 class Node():
-    def __init__(self, L, W, A, tick_length=0.00000001):
+    def __init__(self, L, W, A, _id, tick_length, Medium):
         """
         Inputs:
           L: Lenght of Packet in bytes
@@ -13,7 +13,7 @@ class Node():
           A: Packet Arrival (packets/second)
           tick_length: length of tick in seconds - defaults to 10 ns
         """
-        self.id = 0
+        self.id = _id
 
         self.tick_length = tick_length
         # Lenght of Packet in bits
@@ -21,6 +21,7 @@ class Node():
         self.W = W
         self.A = A
         self.q = deque()
+        self.Medium = Medium
         self.bit_time = 1.00 / float(W)
         # Number of ticks it takes to advance a single bit time
         self.bit_ticks = self.bit_time / tick_length
@@ -52,6 +53,10 @@ class Node():
         self.i = 0
         self.updateArrivalTick(0)
 
+        # Stat Tracking
+        self.successful_transfers = 0
+        self.packets_dropped = 0
+        self.delay_sum = 0
 
         loggingModule.nodeInit(self.id)
 
@@ -65,9 +70,11 @@ class Node():
 
     def updateArrivalTick(self, current_tick):
         self.arrival_tick = current_tick + self.calcArrivalTime()
-        loggingModule.nextPacket(self.id, current_tick)
+        loggingModule.nextPacket(self.id, self.arrival_tick)
 
     def serviceNextPacket(self, current_tick):
+        # If the queue is empty go to IDLE state
+        # Else go to SENSING state and get the next packet from the queue
         if not self.q:
             self.setIdleState(current_tick)
         else:
@@ -86,7 +93,6 @@ class Node():
     def setSensingState(self, current_tick):
         self.current_state = NodeState.SENSING
         self.servicing_milestone = int(current_tick + self.sensing_duration)
-        #log.info("Node 00 SENSING - %s until - %s" % (current_tick, self.servicing_milestone));
         self.i = 0
         loggingModule.stateChanged(self.id, NodeState.SENSING, current_tick)
 
@@ -94,14 +100,15 @@ class Node():
         self.current_state = NodeState.TRANSMITTING
         self.servicing_milestone = int(current_tick + self.transmission_duration)
         loggingModule.stateChanged(self.id, NodeState.TRANSMITTING, current_tick)
-        #log.info("Node 00 TRANSMITTING - %s until - %s" % (current_tick, self.servicing_milestone));
 
     def setBackoffState(self, current_tick):
         self.current_state = NodeState.BACKOFF
 
         self.i += 1
         if self.i > 10:
-            raise ValueError("i should not go past 10")
+            loggingModule.bebError(self.id, current_state, self.server)
+            self.packets_dropped += 1
+            self.serviceNextPacket(current_state)
         upperbound = int(math.pow(2,i)) - 1
         R = random.randrange(0,upperbound)
         self.backoff_duration = self.Tp * R
@@ -109,33 +116,26 @@ class Node():
 
         new_backoff_duration = int(current_tick + self.backoff_duration)
         self.servicing_milestone = new_backoff_duration if new_backoff_duration > 0 else 1
-        #log.info("Node 00 BACKOFF - %s until - %s" % (current_tick, self.servicing_milestone));
         loggingModule.stateChanged(self.id, NodeState.BACKOFF, current_tick)
 
     def setWaitingState(self, current_tick):
         self.current_state = NodeState.WAITING
         new_wait_duration = int(current_tick + self.waiting_duration)
         self.servicing_milestone = new_wait_duration if new_wait_duration > 0 else 1
-        #log.info("Node 00 WAITING - %s until - %s" % (current_tick, self.servicing_milestone));
         loggingModule.stateChanged(self.id, NodeState.WAITING, current_tick)
 
     def setJammingState(self, current_tick):
         self.current_state = NodeState.JAMMING
         self.servicing_milestone = int(current_tick + self.jamming_duration)
-        #log.info("Node 00 JAMMING - %s until - %s" % (current_tick, self.servicing_milestone));
+        self.Medium.sendJammingSignal(self.jamming_duration, current_tick)
         loggingModule.stateChanged(self.id, NodeState.JAMMING, current_tick)
-
-    def sendJammingSignal(self):
-        # TODO: Not yet implemented
-        return
 
     def isMediumBusy(self, current_tick):
         # TODO: Not yet implemented
-        return False
+        return self.Medium.isCarrierBusy(self.id, current_tick)
 
     def arrival(self, current_tick):
         if current_tick == self.arrival_tick:
-            #log.info("Node 00 Packet Arrived - %s" % current_tick);
             loggingModule.packetArrived(self.id, current_tick)
             # If the server is IDLE
             if self.current_state == NodeState.IDLE:
@@ -169,17 +169,18 @@ class Node():
             # begin servicing next packet from queue
             # if queue is empty - go to idle state
             elif self.servicing_milestone == current_tick:
-                #log.info("Node 00 Transmission Successful - %s" % self.server);
                 loggingModule.txSuccess(self.id, current_tick, self.server)
+
+                # Track the successful transfers and total delay
+                self.successful_transfers += 1
+                self.delay_sum += (current_tick - self.server)
+
                 self.serviceNextPacket(current_tick)
 
         # JAMMING
         elif self.current_state == NodeState.JAMMING:
-            self.sendJammingSignal()
-
             if self.servicing_milestone == current_tick:
                 self.setBackoffState(current_tick)
-
 
         # BACKOFF
         elif self.current_state == NodeState.BACKOFF:
@@ -195,3 +196,6 @@ class Node():
     def run(self, current_tick):
         self.arrival(current_tick)
         self.servicing(current_tick)
+
+    def getStatistics(self):
+        return [self.delay_sum, self.successful_transfers, self.packets_dropped]
