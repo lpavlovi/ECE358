@@ -19,7 +19,7 @@ simLog.setLevel(logging.INFO)
 
 nodeLog.addHandler(stream_handler)
 nodeLog.addHandler(node_file_handler)
-nodeLog.setLevel(logging.DEBUG)
+nodeLog.setLevel(logging.INFO)
 
 def logSimulationStats(average_delay, successful_transfers, packets_dropped):
     simLog.info("Simulation - Average Delay: %f - Successful Transfers: %d - Packets Dropped: %d" % (average_delay, successful_transfers, packets_dropped));

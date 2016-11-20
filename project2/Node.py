@@ -166,7 +166,7 @@ class Node():
         # TRANSMITTING
         elif self.current_state == NodeState.TRANSMITTING:
             if self.isMediumBusy(current_tick):
-                self.setJammingState()
+                self.setJammingState(current_tick)
 
             # If transmission successfully complete:
             # begin servicing next packet from queue
