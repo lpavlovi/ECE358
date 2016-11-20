@@ -1,7 +1,7 @@
 import random
 import math
+import loggingModule
 from NodeStates import NodeState
-from logmodule import simLog as log
 from collections import deque
 
 class Node():
@@ -13,15 +13,20 @@ class Node():
           A: Packet Arrival (packets/second)
           tick_length: length of tick in seconds - defaults to 10 ns
         """
+        self.id = 0
 
         self.tick_length = tick_length
         # Lenght of Packet in bits
         self.L = L * 8
         self.W = W
+        self.A = A
         self.q = deque()
         self.bit_time = 1.00 / float(W)
         # Number of ticks it takes to advance a single bit time
         self.bit_ticks = self.bit_time / tick_length
+
+        # Tp represented with number of ticks
+        self.Tp = 512 * self.bit_ticks
 
         # Number of ticks it required to transmit an entire packet
         self.transmission_duration = self.L * self.bit_ticks
@@ -32,8 +37,11 @@ class Node():
         # Number of ticks that the jamming signal will last
         self.jamming_duration = 48 * self.bit_ticks
 
-        # Tp represented with number of ticks
-        self.jamming_duration = 512 * self.bit_ticks
+        # The waiting duration is initialized to 0
+        self.waiting_duration = 0
+
+        # The backoff duration is initialized to 0
+        self.backoff_duration = 0
 
         # Represents when the next packet will arrive
         self.arrival_tick = 0
@@ -41,6 +49,11 @@ class Node():
         self.server = None
 
         self.current_state = NodeState.IDLE
+        self.i = 0
+        self.updateArrivalTick(0)
+
+
+        loggingModule.nodeInit(self.id)
 
     def calcArrivalTime(self):
         u = random.uniform(0,1)
@@ -50,11 +63,83 @@ class Node():
 
         return discrete_arrival_time if discrete_arrival_time > 0 else 1
 
+    def updateArrivalTick(self, current_tick):
+        self.arrival_tick = current_tick + self.calcArrivalTime()
+        loggingModule.nextPacket(self.id, current_tick)
+
+    def serviceNextPacket(self, current_tick):
+        if not self.q:
+            self.setIdleState(current_tick)
+        else:
+            self.setSensingState(current_tick)
+            loggingModule.nodeLog.debug("Node %03d Queue Length: %s" % (self.id, len(self.q)))
+            assert len(self.q) > 0, "Cannot service next packet when the queue is empty"
+            p = self.q.popleft()
+            self.server = p
+
+    def setIdleState(self, current_tick):
+        self.current_state = NodeState.IDLE
+        self.servicing_milestone = 0
+        self.server = None
+        loggingModule.stateChanged(self.id, NodeState.IDLE, current_tick)
+
+    def setSensingState(self, current_tick):
+        self.current_state = NodeState.SENSING
+        self.servicing_milestone = int(current_tick + self.sensing_duration)
+        #log.info("Node 00 SENSING - %s until - %s" % (current_tick, self.servicing_milestone));
+        self.i = 0
+        loggingModule.stateChanged(self.id, NodeState.SENSING, current_tick)
+
+    def setTransmititngState(self, current_tick):
+        self.current_state = NodeState.TRANSMITTING
+        self.servicing_milestone = int(current_tick + self.transmission_duration)
+        loggingModule.stateChanged(self.id, NodeState.TRANSMITTING, current_tick)
+        #log.info("Node 00 TRANSMITTING - %s until - %s" % (current_tick, self.servicing_milestone));
+
+    def setBackoffState(self, current_tick):
+        self.current_state = NodeState.BACKOFF
+
+        self.i += 1
+        if self.i > 10:
+            raise ValueError("i should not go past 10")
+        upperbound = int(math.pow(2,i)) - 1
+        R = random.randrange(0,upperbound)
+        self.backoff_duration = self.Tp * R
+        self.waiting_duration = self.backoff_duration
+
+        new_backoff_duration = int(current_tick + self.backoff_duration)
+        self.servicing_milestone = new_backoff_duration if new_backoff_duration > 0 else 1
+        #log.info("Node 00 BACKOFF - %s until - %s" % (current_tick, self.servicing_milestone));
+        loggingModule.stateChanged(self.id, NodeState.BACKOFF, current_tick)
+
+    def setWaitingState(self, current_tick):
+        self.current_state = NodeState.WAITING
+        new_wait_duration = int(current_tick + self.waiting_duration)
+        self.servicing_milestone = new_wait_duration if new_wait_duration > 0 else 1
+        #log.info("Node 00 WAITING - %s until - %s" % (current_tick, self.servicing_milestone));
+        loggingModule.stateChanged(self.id, NodeState.WAITING, current_tick)
+
+    def setJammingState(self, current_tick):
+        self.current_state = NodeState.JAMMING
+        self.servicing_milestone = int(current_tick + self.jamming_duration)
+        #log.info("Node 00 JAMMING - %s until - %s" % (current_tick, self.servicing_milestone));
+        loggingModule.stateChanged(self.id, NodeState.JAMMING, current_tick)
+
+    def sendJammingSignal(self):
+        # TODO: Not yet implemented
+        return
+
+    def isMediumBusy(self, current_tick):
+        # TODO: Not yet implemented
+        return False
+
     def arrival(self, current_tick):
         if current_tick == self.arrival_tick:
+            #log.info("Node 00 Packet Arrived - %s" % current_tick);
+            loggingModule.packetArrived(self.id, current_tick)
             # If the server is IDLE
             if self.current_state == NodeState.IDLE:
-                assert(self.server is None, "Server is not None while Node is in IDLE state")
+                assert self.server is None, "Server is not None while Node is in IDLE state"
                 self.server = current_tick
                 self.setSensingState(current_tick)
 
@@ -65,77 +150,48 @@ class Node():
             # Update next packet arrival time
             self.updateArrivalTick(current_tick)
 
-    def updateArrivalTick(self, current_tick):
-        self.arrival_tick = current_tick + self.calcArrivalTime()
-
-    """
-    def updateDepartureTick(self, current_tick):
-        self.departure_tick = current_tick + self.server_proc_duration
-    """
-
-    def setIdleState(current_tick):
-        # TODO: Revisit method later
-        self.current_state = NodeState.IDLE
-        self.servicing_milestone = 0
-
-    def setSensingState(current_tick):
-        self.current_state = NodeState.SENSING
-        self.servicing_milestone = current_tick + self.sensing_duration
-
-    def setTransmititngState(current_tick):
-        self.current_state = NodeState.TRANSMITTING
-        self.servicing_milestone = current_tick + self.transmission_duration
-
-    def setBackoffState(current_tick):
-        self.current_state = NodeState.TRANSMITTING
-        self.servicing_milestone = current_tick + self.transmission_duration
-
-    def setWaitingState(current_tick):
-        self.current_state = NodeState.WAITING
-        # TODO: Calculate waiting duration
-        # This implementation is wrong - just a placeholder
-        self.servicing_milestone = current_tick + 24 * self.bit_ticks
-
-    def sendJammingSignal(self):
-        print "sendJammingSignal not yet implemented"
-        return
-
-    def isMediumBusy(self):
-        return False
 
     def servicing(self, current_tick):
+        # SENSING
         if self.current_state == NodeState.SENSING:
-            # TODO: Check medium for any signal
             if self.isMediumBusy(current_tick):
                 self.setWaitingState(current_tick)
 
-            if self.servicing_milestone == current_tick:
+            elif self.servicing_milestone == current_tick:
                 self.setTransmititngState(current_tick)
 
-        if self.current_state == NodeState.TRANSMITTING:
-            # TODO: Check medium for any signal
+        # TRANSMITTING
+        elif self.current_state == NodeState.TRANSMITTING:
             if self.isMediumBusy(current_tick):
                 self.setJammingState()
 
             # If transmission successfully complete:
             # begin servicing next packet from queue
             # if queue is empty - go to idle state
-            if self.servicing_milestone == current_tick:
-                # TODO: Implement start servicing next packet in queue
-                self.setSensingState(current_tick)
+            elif self.servicing_milestone == current_tick:
+                #log.info("Node 00 Transmission Successful - %s" % self.server);
+                loggingModule.txSuccess(self.id, current_tick, self.server)
+                self.serviceNextPacket(current_tick)
 
-        if self.current_state == NodeState.JAMMING:
+        # JAMMING
+        elif self.current_state == NodeState.JAMMING:
             self.sendJammingSignal()
 
             if self.servicing_milestone == current_tick:
                 self.setBackoffState(current_tick)
 
 
-        if self.current_state == NodeState.BACKOFF:
+        # BACKOFF
+        elif self.current_state == NodeState.BACKOFF:
             if self.servicing_milestone == current_tick:
                 self.setSensingState(current_tick)
 
-        if self.current_state == NodeState.WAITING:
+        # WAITING
+        elif self.current_state == NodeState.WAITING:
             if self.servicing_milestone == current_tick:
                 self.setSensingState(current_tick)
 
+
+    def run(self, current_tick):
+        self.arrival(current_tick)
+        self.servicing(current_tick)
