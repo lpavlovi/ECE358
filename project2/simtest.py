@@ -52,6 +52,6 @@ class NetWork():
         total_average_delay = float(total_delay) / float(total_successful_transfers) if total_successful_transfers!= 0 else 0
         loggingModule.logSimulationStats(total_average_delay, total_successful_transfers, total_packets_dropped)
 
-nw = NetWork(2, sim_L, sim_W, sim_A, TICK_LENGTH, 10000)
+nw = NetWork(20, sim_L, sim_W, sim_A, TICK_LENGTH, SIM_DURATION)
 nw.simulate()
 nw.logStatistics()
