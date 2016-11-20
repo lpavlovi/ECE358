@@ -64,6 +64,5 @@ class NetWork():
         loggingModule.logSimulationStats(total_average_delay, total_successful_transfers, total_packets_dropped)
 
 nw = NetWork(20, sim_L, sim_W, sim_A, TICK_LENGTH, SIM_DURATION)
-# nw.simulateTickSkip()
-nw.simulate()
+nw.simulateTickSkip()
 nw.logStatistics()
