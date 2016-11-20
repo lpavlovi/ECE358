@@ -8,6 +8,9 @@ simLog = logging.getLogger('Sim')
 fname = 'Project2Simulation'
 file_handler = logging.FileHandler('%s.log' % fname)
 
+nfname = 'nodes'
+node_file_handler = logging.FileHandler('%s.log' % nfname)
+
 stream_handler = logging.StreamHandler()
 
 simLog.addHandler(file_handler)
@@ -15,7 +18,8 @@ simLog.addHandler(stream_handler)
 simLog.setLevel(logging.INFO)
 
 nodeLog.addHandler(stream_handler)
-nodeLog.setLevel(logging.INFO)
+nodeLog.addHandler(node_file_handler)
+nodeLog.setLevel(logging.DEBUG)
 
 def logSimulationStats(average_delay, successful_transfers, packets_dropped):
     simLog.info("Simulation - Average Delay: %f - Successful Transfers: %d - Packets Dropped: %d" % (average_delay, successful_transfers, packets_dropped));

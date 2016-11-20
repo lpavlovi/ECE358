@@ -4,6 +4,9 @@ class Medium():
         self.propagation_delay = int((distance_between_nodes/propagation_speed) / tick_length)
         self.node_transfer_times = [[0,0] for x in xrange(N)]
 
+    def finishTransmission(self, n, current_tick):
+        [self.setTransmissionEnd(self.node_transfer_times[x], current_tick) for x in xrange(self.N) if x != n ]
+
     def startTransmission(self, n, current_tick):
         [self.setTransmissionStart(self.node_transfer_times[x], current_tick) for x in xrange(self.N) if x != n ]
 

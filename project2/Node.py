@@ -39,10 +39,8 @@ class Node():
         self.jamming_duration = 48 * self.bit_ticks
 
         # The waiting duration is initialized to 0
-        self.waiting_duration = 0
+        self.waiting_duration = self.Tp
 
-        # The backoff duration is initialized to 0
-        self.backoff_duration = 0
 
         # Represents when the next packet will arrive
         self.arrival_tick = 0
@@ -99,6 +97,7 @@ class Node():
     def setTransmititngState(self, current_tick):
         self.current_state = NodeState.TRANSMITTING
         self.servicing_milestone = int(current_tick + self.transmission_duration)
+        self.Medium.startTransmission(self.id, current_tick)
         loggingModule.stateChanged(self.id, NodeState.TRANSMITTING, current_tick)
 
     def setBackoffState(self, current_tick):
@@ -109,19 +108,24 @@ class Node():
             loggingModule.bebError(self.id, current_state, self.server)
             self.packets_dropped += 1
             self.serviceNextPacket(current_state)
-        upperbound = int(math.pow(2,i)) - 1
-        R = random.randrange(0,upperbound)
-        self.backoff_duration = self.Tp * R
-        self.waiting_duration = self.backoff_duration
+            return
 
-        new_backoff_duration = int(current_tick + self.backoff_duration)
-        self.servicing_milestone = new_backoff_duration if new_backoff_duration > 0 else 1
+        upperbound = int(math.pow(2,i)) - 1
+        R = random.randrange(1,upperbound)
+        R = R if R > 0 else 1
+
+        new_backoff_duration = self.Tp * R
+        self.waiting_duration = new_backoff_duration
+
+        self.servicing_milestone = new_backoff_duration + current_tick 
         loggingModule.stateChanged(self.id, NodeState.BACKOFF, current_tick)
 
     def setWaitingState(self, current_tick):
         self.current_state = NodeState.WAITING
-        new_wait_duration = int(current_tick + self.waiting_duration)
-        self.servicing_milestone = new_wait_duration if new_wait_duration > 0 else 1
+
+        new_wait_duration = self.waiting_duration if self.waiting_duration > 0 else 1
+
+        self.servicing_milestone = current_tick + new_wait_duration 
         loggingModule.stateChanged(self.id, NodeState.WAITING, current_tick)
 
     def setJammingState(self, current_tick):
@@ -131,7 +135,6 @@ class Node():
         loggingModule.stateChanged(self.id, NodeState.JAMMING, current_tick)
 
     def isMediumBusy(self, current_tick):
-        # TODO: Not yet implemented
         return self.Medium.isCarrierBusy(self.id, current_tick)
 
     def arrival(self, current_tick):
@@ -174,7 +177,7 @@ class Node():
                 # Track the successful transfers and total delay
                 self.successful_transfers += 1
                 self.delay_sum += (current_tick - self.server)
-
+                self.Medium.finishTransmission(self.id, current_tick)
                 self.serviceNextPacket(current_tick)
 
         # JAMMING
