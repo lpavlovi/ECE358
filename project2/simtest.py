@@ -7,8 +7,9 @@ import loggingModule
 
 PROP_SPEED = 2e8
 NODE_DIST = 20
-TICK_LENGTH = 0.000001
-SIM_DURATION = 10000000
+TICK_LENGTH = 0.00000001
+#SIM_DURATION = 3254499
+SIM_DURATION = 100000000
 
 sim_L = 1500
 sim_W = 1000000
@@ -32,6 +33,17 @@ class NetWork():
             for n in self.nodes:
                 n.run(tick)
 
+    def simulateTickSkip(self):
+        tick = 0
+        closest_node_event = [0]*self.N
+
+        while tick < self.sim_duration:
+            for i in xrange(self.N):
+                self.nodes[i].run(tick)
+                closest_node_event[i] = self.nodes[i].getClosestEvent()
+            tick = min(closest_node_event)
+            print tick
+
     def logStatistics(self):
         total_delay = 0
         total_successful_transfers = 0
@@ -53,5 +65,6 @@ class NetWork():
         loggingModule.logSimulationStats(total_average_delay, total_successful_transfers, total_packets_dropped)
 
 nw = NetWork(20, sim_L, sim_W, sim_A, TICK_LENGTH, SIM_DURATION)
+# nw.simulateTickSkip()
 nw.simulate()
 nw.logStatistics()

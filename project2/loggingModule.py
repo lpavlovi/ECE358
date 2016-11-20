@@ -44,3 +44,6 @@ def txSuccess(node_id, current_tick, packet):
 
 def bebError(node_id, current_tick, packet):
     nodeLog.error("Node %03d Transmission Error %s - at %s" % (node_id, packet, current_tick));
+
+def bebStatus(node_id, i, current_tick, backoff_duration):
+    nodeLog.error("Node %03d BEB - i: %d Start: %d - End: %d" % (node_id, i, current_tick, backoff_duration));

@@ -41,6 +41,8 @@ class Node():
         # The waiting duration is initialized to 0
         self.waiting_duration = self.Tp
 
+        self.servicing_milestone = 0
+        self.intermediate_milestone = 0
 
         # Represents when the next packet will arrive
         self.arrival_tick = 0
@@ -57,6 +59,19 @@ class Node():
         self.delay_sum = 0
 
         loggingModule.nodeInit(self.id)
+
+    def getClosestEvent(self):
+        if self.intermediate_milestone != 0:
+            ret_val = self.intermediate_milestone
+            self.intermediate_milestone = 0
+            return ret_val
+
+        if self.servicing_milestone != 0 and self.arrival_tick != 0:
+            return min(self.servicing_milestone, self.arrival_tick)
+        if self.arrival_tick == 0:
+            return self.servicing_milestone
+        else:
+            return self.arrival_tick
 
     def calcArrivalTime(self):
         u = random.uniform(0,1)
@@ -91,14 +106,20 @@ class Node():
     def setSensingState(self, current_tick):
         self.current_state = NodeState.SENSING
         self.servicing_milestone = int(current_tick + self.sensing_duration)
-        self.i = 0
-        loggingModule.stateChanged(self.id, NodeState.SENSING, current_tick)
+        loggingModule.stateChanged(self.id, NodeState.SENSING, int(current_tick))
 
     def setTransmititngState(self, current_tick):
         self.current_state = NodeState.TRANSMITTING
         self.servicing_milestone = int(current_tick + self.transmission_duration)
+        self.intermediate_milestone = int(current_tick + 10)
         self.Medium.startTransmission(self.id, current_tick)
         loggingModule.stateChanged(self.id, NodeState.TRANSMITTING, current_tick)
+
+    def calculateBEB(self, i):
+        upperbound = int(math.pow(2,i)) - 1
+        R = random.randrange(0,upperbound)
+        R = R if R > 0 else 1
+        return self.Tp * R
 
     def setBackoffState(self, current_tick):
         self.current_state = NodeState.BACKOFF
@@ -110,15 +131,11 @@ class Node():
             self.serviceNextPacket(current_state)
             return
 
-        upperbound = int(math.pow(2,i)) - 1
-        R = random.randrange(1,upperbound)
-        R = R if R > 0 else 1
+        self.waiting_duration = self.calculateBEB(self.i)
 
-        new_backoff_duration = self.Tp * R
-        self.waiting_duration = new_backoff_duration
-
-        self.servicing_milestone = new_backoff_duration + current_tick 
+        self.servicing_milestone = self.waiting_duration + current_tick 
         loggingModule.stateChanged(self.id, NodeState.BACKOFF, current_tick)
+        loggingModule.bebStatus(self.id, self.i, current_tick, self.servicing_milestone)
 
     def setWaitingState(self, current_tick):
         self.current_state = NodeState.WAITING
@@ -131,6 +148,7 @@ class Node():
     def setJammingState(self, current_tick):
         self.current_state = NodeState.JAMMING
         self.servicing_milestone = int(current_tick + self.jamming_duration)
+        self.intermediate_milestone = int(current_tick + 10)
         self.Medium.sendJammingSignal(self.jamming_duration, current_tick)
         loggingModule.stateChanged(self.id, NodeState.JAMMING, current_tick)
 
@@ -166,8 +184,7 @@ class Node():
         # TRANSMITTING
         elif self.current_state == NodeState.TRANSMITTING:
             if self.isMediumBusy(current_tick):
-                self.setJammingState()
-
+                self.setJammingState(current_tick)
             # If transmission successfully complete:
             # begin servicing next packet from queue
             # if queue is empty - go to idle state
@@ -177,6 +194,7 @@ class Node():
                 # Track the successful transfers and total delay
                 self.successful_transfers += 1
                 self.delay_sum += (current_tick - self.server)
+                self.i = 0
                 self.Medium.finishTransmission(self.id, current_tick)
                 self.serviceNextPacket(current_tick)
 
@@ -184,16 +202,19 @@ class Node():
         elif self.current_state == NodeState.JAMMING:
             if self.servicing_milestone == current_tick:
                 self.setBackoffState(current_tick)
+                self.intermediate_milestone = int(current_tick + 1)
 
         # BACKOFF
         elif self.current_state == NodeState.BACKOFF:
             if self.servicing_milestone == current_tick:
                 self.setSensingState(current_tick)
+                self.intermediate_milestone = int(current_tick + 1)
 
         # WAITING
         elif self.current_state == NodeState.WAITING:
             if self.servicing_milestone == current_tick:
                 self.setSensingState(current_tick)
+                self.intermediate_milestone = int(current_tick + 1)
 
 
     def run(self, current_tick):
