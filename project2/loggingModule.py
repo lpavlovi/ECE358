@@ -18,13 +18,15 @@ simLog.addHandler(file_handler)
 simLog.addHandler(stream_handler)
 simLog.setLevel(logging.INFO)
 
-mediumLog.addHandler(stream_handler)
-mediumLog.addHandler(node_file_handler)
+#mediumLog.addHandler(stream_handler)
+#mediumLog.addHandler(node_file_handler)
 mediumLog.setLevel(logging.DEBUG)
 
-nodeLog.addHandler(stream_handler)
-nodeLog.addHandler(node_file_handler)
-nodeLog.setLevel(logging.CRITICAL)
+#nodeLog.addHandler(stream_handler)
+#nodeLog.addHandler(node_file_handler)
+#nodeLog.setLevel(logging.CRITICAL)
+nodeLog.setLevel(logging.DEBUG)
+
 
 def logSimulationStats(simulation_duration_seconds, average_delay, average_delay_seconds, successful_transfers, packets_dropped):
     simLog.info("Simulation - Simulation Duration: %f - Average Delay: %f - Average Delay Seconds: %f - Successful Transfers: %d - Packets Dropped: %d" % (simulation_duration_seconds ,average_delay, average_delay_seconds, successful_transfers, packets_dropped));
@@ -44,8 +46,8 @@ def packetArrived(node_id, current_tick):
 def stateChanged(node_id, state, current_tick):
     nodeLog.debug("Node %03d %s - %s" % (node_id, state, current_tick));
 
-def txSuccess(node_id, current_tick, packet):
-    nodeLog.info("Node %03d Transmission Successful: %s - at %s" % (node_id, packet, current_tick));
+def txSuccess(node_id, current_tick, packet, packet_delay, packet_delay_seconds):
+    nodeLog.info("Node %03d Transmission Successful: %s - at %s - Delay: %f - Delay(s): %f" % (node_id, packet, current_tick, packet_delay, packet_delay_seconds));
 
 def bebError(node_id, current_tick, packet):
     nodeLog.error("Node %03d Transmission Error %s - at %s" % (node_id, packet, current_tick));

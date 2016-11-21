@@ -189,11 +189,14 @@ class Node():
             # begin servicing next packet from queue
             # if queue is empty - go to idle state
             elif self.servicing_milestone == current_tick:
-                loggingModule.txSuccess(self.id, current_tick, self.server)
 
                 # Track the successful transfers and total delay
+                packet_delay = current_tick - self.server
                 self.successful_transfers += 1
-                self.delay_sum += (current_tick - self.server)
+                self.delay_sum += packet_delay
+
+                loggingModule.txSuccess(self.id, current_tick, self.server, packet_delay, packet_delay * self.tick_length)
+
                 self.i = 0
                 self.Medium.finishTransmission(self.id, current_tick)
                 self.serviceNextPacket(current_tick)
