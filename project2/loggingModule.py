@@ -7,10 +7,10 @@ simLog = logging.getLogger('Sim')
 mediumLog = logging.getLogger('Medium')
 
 fname = 'sim_N%d_A%d' % (int(sys.argv[1]), int(sys.argv[2]))
-file_handler = logging.FileHandler('%s.log' % fname)
+file_handler = logging.FileHandler('./logs/%s.log' % fname)
 
 nfname = 'nodes'
-node_file_handler = logging.FileHandler('%s.log' % nfname)
+node_file_handler = logging.FileHandler('./logs/%s.log' % nfname)
 
 stream_handler = logging.StreamHandler()
 

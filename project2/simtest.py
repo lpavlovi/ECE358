@@ -76,6 +76,6 @@ class NetWork():
                 total_packets_dropped
                 )
 
-simulatedNetwork = NetWork(sim_N, sim_L, sim_W, sim_A, TICK_LENGTH, FIVE_MIN)
+simulatedNetwork = NetWork(sim_N, sim_L, sim_W, sim_A, TICK_LENGTH, SIM_DURATION * 5)
 simulatedNetwork.simulateTickSkip()
 simulatedNetwork.logStatistics()
