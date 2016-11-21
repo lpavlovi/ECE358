@@ -1,0 +1,21 @@
+Node 00 - Average Delay: 2485451.000000 - Successful Transfers: 10 - Packets Dropped: 0
+Node 01 - Average Delay: 2547401.263158 - Successful Transfers: 19 - Packets Dropped: 0
+Node 02 - Average Delay: 2013977.545455 - Successful Transfers: 11 - Packets Dropped: 0
+Node 03 - Average Delay: 1728994.777778 - Successful Transfers: 18 - Packets Dropped: 0
+Node 04 - Average Delay: 2730276.625000 - Successful Transfers: 16 - Packets Dropped: 0
+Node 05 - Average Delay: 2834174.800000 - Successful Transfers: 10 - Packets Dropped: 0
+Node 06 - Average Delay: 3159616.888889 - Successful Transfers: 18 - Packets Dropped: 0
+Node 07 - Average Delay: 1980820.500000 - Successful Transfers: 16 - Packets Dropped: 0
+Node 08 - Average Delay: 1880360.818182 - Successful Transfers: 11 - Packets Dropped: 0
+Node 09 - Average Delay: 2947569.700000 - Successful Transfers: 10 - Packets Dropped: 0
+Node 10 - Average Delay: 2329514.428571 - Successful Transfers: 14 - Packets Dropped: 0
+Node 11 - Average Delay: 2573739.750000 - Successful Transfers: 20 - Packets Dropped: 0
+Node 12 - Average Delay: 1813125.555556 - Successful Transfers: 18 - Packets Dropped: 0
+Node 13 - Average Delay: 1423811.736842 - Successful Transfers: 19 - Packets Dropped: 0
+Node 14 - Average Delay: 2089141.526316 - Successful Transfers: 19 - Packets Dropped: 0
+Node 15 - Average Delay: 1751743.333333 - Successful Transfers: 12 - Packets Dropped: 0
+Node 16 - Average Delay: 5183337.888889 - Successful Transfers: 9 - Packets Dropped: 0
+Node 17 - Average Delay: 2072322.411765 - Successful Transfers: 17 - Packets Dropped: 0
+Node 18 - Average Delay: 2427457.642857 - Successful Transfers: 14 - Packets Dropped: 0
+Node 19 - Average Delay: 1568856.055556 - Successful Transfers: 18 - Packets Dropped: 0
+Simulation - Simulation Duration: 5.000000 - Average Delay: 2293904.655518 - Average Delay Seconds: 0.022939 - Successful Transfers: 299 - Packets Dropped: 0
