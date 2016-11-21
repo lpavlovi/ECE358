@@ -19,13 +19,13 @@ simLog.addHandler(stream_handler)
 simLog.setLevel(logging.INFO)
 
 #mediumLog.addHandler(stream_handler)
-#mediumLog.addHandler(node_file_handler)
-mediumLog.setLevel(logging.DEBUG)
+mediumLog.addHandler(node_file_handler)
+mediumLog.setLevel(logging.WARN)
 
 #nodeLog.addHandler(stream_handler)
-#nodeLog.addHandler(node_file_handler)
-#nodeLog.setLevel(logging.CRITICAL)
-nodeLog.setLevel(logging.DEBUG)
+nodeLog.addHandler(node_file_handler)
+nodeLog.setLevel(logging.CRITICAL)
+#nodeLog.setLevel(logging.DEBUG)
 
 
 def logSimulationStats(simulation_duration_seconds, average_delay, average_delay_seconds, successful_transfers, packets_dropped):
