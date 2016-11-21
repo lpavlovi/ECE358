@@ -4,8 +4,9 @@ import sys
 
 nodeLog = logging.getLogger('Node')
 simLog = logging.getLogger('Sim')
+mediumLog = logging.getLogger('Medium')
 
-fname = 'Project2Simulation'
+fname = 'sim_N%d_A%d' % (int(sys.argv[1]), int(sys.argv[2]))
 file_handler = logging.FileHandler('%s.log' % fname)
 
 nfname = 'nodes'
@@ -17,12 +18,16 @@ simLog.addHandler(file_handler)
 simLog.addHandler(stream_handler)
 simLog.setLevel(logging.INFO)
 
+mediumLog.addHandler(stream_handler)
+mediumLog.addHandler(node_file_handler)
+mediumLog.setLevel(logging.DEBUG)
+
 nodeLog.addHandler(stream_handler)
 nodeLog.addHandler(node_file_handler)
-nodeLog.setLevel(logging.DEBUG)
+nodeLog.setLevel(logging.CRITICAL)
 
-def logSimulationStats(average_delay, successful_transfers, packets_dropped):
-    simLog.info("Simulation - Average Delay: %f - Successful Transfers: %d - Packets Dropped: %d" % (average_delay, successful_transfers, packets_dropped));
+def logSimulationStats(simulation_duration_seconds, average_delay, average_delay_seconds, successful_transfers, packets_dropped):
+    simLog.info("Simulation - Simulation Duration: %f - Average Delay: %f - Average Delay Seconds: %f - Successful Transfers: %d - Packets Dropped: %d" % (simulation_duration_seconds ,average_delay, average_delay_seconds, successful_transfers, packets_dropped));
 
 def logNodeStats(node_id, average_delay, successful_transfers, packets_dropped):
     simLog.info("Node %02d - Average Delay: %f - Successful Transfers: %d - Packets Dropped: %d" % (node_id, average_delay, successful_transfers, packets_dropped));

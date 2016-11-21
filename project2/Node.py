@@ -60,8 +60,8 @@ class Node():
 
         loggingModule.nodeInit(self.id)
 
-    def getClosestEvent(self):
-        if self.intermediate_milestone != 0:
+    def getClosestEvent(self, current_tick):
+        if self.intermediate_milestone != 0 and self.intermediate_milestone > current_tick:
             ret_val = self.intermediate_milestone
             self.intermediate_milestone = 0
             return ret_val
