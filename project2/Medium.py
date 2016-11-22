@@ -21,10 +21,6 @@ class Medium():
     def setJammingSignal(self, tx_time, current_tick, ending_tick):
         tx_time[0] = current_tick + self.propagation_delay
         tx_time[1] = ending_tick + self.propagation_delay
-        """
-        log.debug('JAMMING START: %d'% tx_time[0])
-        log.debug('JAMMING END:   %d'% tx_time[1])
-        """
 
     def setTransmissionEnd(self, tx_time, ending_tick):
         tx_time[0] = 0
@@ -47,9 +43,3 @@ class Medium():
 
         return False
 
-
-"""
-[ 0000 , 1305]
-[ 0000 , 1305]
-[ 0000 , 1305]
-"""
