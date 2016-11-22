@@ -126,9 +126,9 @@ class Node():
 
         self.i += 1
         if self.i > 10:
-            loggingModule.bebError(self.id, current_state, self.server)
+            loggingModule.bebError(self.id, current_tick, self.server)
             self.packets_dropped += 1
-            self.serviceNextPacket(current_state)
+            self.serviceNextPacket(current_tick)
             return
 
         self.waiting_duration = self.calculateBEB(self.i)

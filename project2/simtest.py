@@ -1,7 +1,7 @@
 import random
 import math
 import sys
-from Node import Node
+from Node import Node as Node
 from Medium import Medium
 from NodeStates import NodeState
 import loggingModule
@@ -76,6 +76,6 @@ class NetWork():
                 total_packets_dropped
                 )
 
-simulatedNetwork = NetWork(sim_N, sim_L, sim_W, sim_A, TICK_LENGTH, SIM_DURATION * 5)
+simulatedNetwork = NetWork(sim_N, sim_L, sim_W, sim_A, TICK_LENGTH, SIM_DURATION * 10)
 simulatedNetwork.simulateTickSkip()
 simulatedNetwork.logStatistics()

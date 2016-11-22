@@ -7,3 +7,4 @@ class NodeState(Enum):
     JAMMING      = 4
     BACKOFF      = 5
     WAITING      = 6
+    PROBABILITY  = 7
