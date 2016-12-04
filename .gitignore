@@ -1,2 +1,4 @@
 *.pyc
 *.swp
+project2/simulation_logs
+project2/simulation_logs/*
