@@ -27,6 +27,10 @@ class NetWork():
         self.medium = Medium(N, PROP_SPEED, NODE_DIST, tick_length)
         self.nodes  = [Node(L,W,A,x,tick_length,self.medium) for x in xrange(N)]
         self.N = N
+        self.A = A
+        self.W = W
+        self.L = L
+        # self.P = P
         self.tick_length = tick_length
 
 
@@ -66,14 +70,26 @@ class NetWork():
         # Calculate total average delay
         total_average_delay = float(total_delay) / float(total_successful_transfers) if total_successful_transfers!= 0 else 0
         total_average_delay_seconds = float(total_average_delay) * float(self.tick_length)
+        total_throughput = (total_successful_transfers * float(sim_L) * 8.00) / (float(self.sim_duration) * float(self.tick_length))
 
         # Log complete simulation statistics
-        loggingModule.logSimulationStats(
+        loggingModule.logSimulationStatsV3(
+                self.N,
+                self.A,
+                self.W,
+                "N/A",
+                self.L,
+                # N
+                # A
+                # W
+                # P
+                # L
                 self.simulation_duration_seconds,
                 total_average_delay,
                 total_average_delay_seconds,
                 total_successful_transfers,
-                total_packets_dropped
+                total_packets_dropped,
+                total_throughput
                 )
 
 simulatedNetwork = NetWork(sim_N, sim_L, sim_W, sim_A, TICK_LENGTH, SIM_DURATION * 10)
